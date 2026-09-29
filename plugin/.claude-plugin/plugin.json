@@ -1,0 +1,42 @@
+{
+  "name": "q-core",
+  "displayName": "q-core life skills",
+  "description": "The owner's life skills (statement and document intake, briefs, reminders, email triage, financial evals) and the q-core MCP connection, kept current automatically.",
+  "author": {
+    "name": "The owner"
+  },
+  "repository": "https://github.com/Ascinocco/q-core-clean",
+  "userConfig": {
+    "server_url": {
+      "type": "string",
+      "title": "q-core URL",
+      "description": "The Tailscale Serve origin, e.g. https://q-core.tail1234.ts.net (http://127.0.0.1:8420 on the server itself). No trailing slash.",
+      "required": true
+    },
+    "api_token": {
+      "type": "string",
+      "title": "q-core token",
+      "description": "This machine's full-scope token from /ui/tokens or `python -m api.tokens create`. Claude Code keeps it in secure storage: the system keychain on macOS, its private credentials file on Linux; never settings.json.",
+      "sensitive": true,
+      "required": true
+    },
+    "server_ssh": {
+      "type": "string",
+      "title": "Server SSH target",
+      "description": "OpenSSH destination of the q-core server, e.g. owner@q-core. Leave unset on the server itself.",
+      "default": ""
+    },
+    "server_checkout": {
+      "type": "string",
+      "title": "Server q-core checkout",
+      "description": "Path of the q-core checkout on the server, used for backups and intake.",
+      "default": "~/q-core"
+    },
+    "intake_dir": {
+      "type": "string",
+      "title": "Local intake folder",
+      "description": "Where statement folders are dropped on this machine before a push to the server, e.g. ~/Q/intake.",
+      "default": "~/Q/intake"
+    }
+  }
+}

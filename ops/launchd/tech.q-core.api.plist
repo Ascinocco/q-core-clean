@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>tech.q-core.api</string>
+
+    <!-- `python -m api.run` rather than the uvicorn CLI: uvicorn's
+         --log-config flag takes a file path, so using it would mean a
+         second hand-maintained copy of the logging config on disk. See
+         api/run.py. -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>/path/to/q-core/.venv/bin/python</string>
+        <string>-m</string>
+        <string>api.run</string>
+    </array>
+
+    <!-- Also what puts the repo root on sys.path for `-m`, and what makes
+         the relative paths in .env resolve. -->
+    <key>WorkingDirectory</key>
+    <string>/path/to/q-core</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- Restart on a crash, but not after a deliberate `launchctl stop`. -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+
+    <!-- Fallback capture only. Anything the app logs itself goes to
+         data/logs/api.log as JSON; these two files exist to catch what
+         happens *before* logging is configured — an import error, a
+         missing Q_CORE_API_TOKEN, a broken venv — which would otherwise
+         leave no trace anywhere. Kept separate from api.log so a Python
+         traceback never lands mid-stream in a JSON-lines file. -->
+    <key>StandardOutPath</key>
+    <string>/path/to/q-core/data/logs/api.launchd.out</string>
+    <key>StandardErrorPath</key>
+    <string>/path/to/q-core/data/logs/api.launchd.err</string>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

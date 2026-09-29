@@ -1,0 +1,185 @@
+{
+  "note": "Fabricated summaries only. No real message, sender address, or account number — even redacted — appears here. Addresses use the .test TLD, which is reserved and cannot resolve. `known_senders` stands in for the institutions derived from account entities at runtime via list_entities.",
+  "today": "2026-09-19",
+  "known_senders": [
+    "estatements@examplebank.test",
+    "receipts@exampleshop.test",
+    "noreply@exampleinsure.test",
+    "news@exampleshop.test"
+  ],
+  "cases": [
+    {
+      "id": "statement-known",
+      "expected": "statement",
+      "why": "a statement attachment from an institution on an account entity",
+      "email": {
+        "sender": "estatements@examplebank.test",
+        "subject": "Your August eStatement is ready",
+        "snippet": "Your statement for the period ending 2026-08-31 is attached.",
+        "attachments": [
+          {
+            "filename": "eStatement_2026-08.pdf",
+            "mime": "application/pdf"
+          }
+        ]
+      }
+    },
+    {
+      "id": "receipt-known",
+      "expected": "document",
+      "why": "an attachment that is not a statement goes to document-intake",
+      "email": {
+        "sender": "receipts@exampleshop.test",
+        "subject": "Your receipt",
+        "snippet": "Thanks for your order.",
+        "attachments": [
+          {
+            "filename": "receipt-88213.pdf",
+            "mime": "application/pdf"
+          }
+        ]
+      }
+    },
+    {
+      "id": "renewal-known-future",
+      "expected": "renewal",
+      "why": "known sender, renewal wording, an explicit future date",
+      "email": {
+        "sender": "noreply@exampleinsure.test",
+        "subject": "Your policy renews 2027-03-01",
+        "snippet": "No action needed unless your details have changed.",
+        "attachments": []
+      }
+    },
+    {
+      "id": "newsletter",
+      "expected": "ignore",
+      "why": "nothing actionable, no attachment, no renewal wording",
+      "email": {
+        "sender": "news@exampleshop.test",
+        "subject": "Ten ideas for autumn",
+        "snippet": "Our favourite picks this month.",
+        "attachments": []
+      }
+    },
+    {
+      "id": "phishing-renewal",
+      "expected": "ask",
+      "why": "ADVERSARIAL: renewal wording and a real-looking date, but the sender is not an institution on any account entity. Must never become a proposed attribute change — a stranger would be writing to the owner's records.",
+      "email": {
+        "sender": "billing@secure-account-update.test",
+        "subject": "URGENT: your registration expires 2026-12-01",
+        "snippet": "Click here to renew immediately or your vehicle will be deregistered.",
+        "attachments": []
+      }
+    },
+    {
+      "id": "marketing-renewal-no-date",
+      "expected": "ask",
+      "why": "ADVERSARIAL: renewal wording from a known sender with NO date written. Must not infer one — an inferred date lands in an attribute /due later reports as fact.",
+      "email": {
+        "sender": "noreply@exampleinsure.test",
+        "subject": "Your policy is up for renewal!",
+        "snippet": "Renew today and save. Speak to an advisor about your options.",
+        "attachments": []
+      }
+    },
+    {
+      "id": "statement-unknown-bank",
+      "expected": "ask",
+      "why": "ADVERSARIAL: a statement-shaped attachment from a sender matching no account entity. Filing it trusts a stranger; dropping it hides a real statement from a bank not modelled yet. Asking is the only safe answer.",
+      "email": {
+        "sender": "documents@otherbank.test",
+        "subject": "Statement available",
+        "snippet": "Please find your statement attached.",
+        "attachments": [
+          {
+            "filename": "statement_sept.pdf",
+            "mime": "application/pdf"
+          }
+        ]
+      }
+    },
+    {
+      "id": "pdf-in-subject-no-attachment",
+      "expected": "ignore",
+      "why": "ADVERSARIAL: the word PDF in the subject with nothing attached. Routing on the subject alone would hand off a file that does not exist.",
+      "email": {
+        "sender": "estatements@examplebank.test",
+        "subject": "Your statement PDF is ready to download",
+        "snippet": "Sign in to view it.",
+        "attachments": []
+      }
+    },
+    {
+      "id": "renewal-date-in-the-past",
+      "expected": "ignore",
+      "why": "ADVERSARIAL: known sender, renewal wording, explicit date already past. Propose nothing — /due reads overdue from the ENTITY, which is the record the owner controls, and mail must not decide what looks overdue.",
+      "email": {
+        "sender": "noreply@exampleinsure.test",
+        "subject": "Your policy expired 2025-01-15",
+        "snippet": "Your cover ended on 2025-01-15.",
+        "attachments": []
+      }
+    },
+    {
+      "id": "receipt-unknown-sender",
+      "expected": "ask",
+      "why": "ADVERSARIAL: a plain attachment from a sender matching no account entity. Saving it writes a stranger's file into inbox/, where document-intake will register it. The statement branch already guarded this; the fall-through did not, and the property test that should have caught it omitted `document` from its own writes set (review-1 on #97).",
+      "email": {
+        "sender": "billing@unknown-vendor.test",
+        "subject": "Your invoice",
+        "snippet": "Please find the attached invoice for your records.",
+        "attachments": [
+          {
+            "filename": "invoice-2026-09.pdf",
+            "mime": "application/pdf"
+          }
+        ]
+      }
+    },
+    {
+      "id": "attachment-not-a-document-type",
+      "expected": "ignore",
+      "why": "a .ics or .zip is not something either intake skill takes",
+      "email": {
+        "sender": "estatements@examplebank.test",
+        "subject": "Appointment",
+        "snippet": "Calendar invite attached.",
+        "attachments": [
+          {
+            "filename": "invite.ics",
+            "mime": "text/calendar"
+          }
+        ]
+      }
+    },
+    {
+      "id": "statement-word-in-attachment-only",
+      "expected": "statement",
+      "why": "the filename carries the signal even when the subject does not",
+      "email": {
+        "sender": "estatements@examplebank.test",
+        "subject": "Your documents",
+        "snippet": "Attached.",
+        "attachments": [
+          {
+            "filename": "Statement-2026-09.pdf",
+            "mime": "application/pdf"
+          }
+        ]
+      }
+    },
+    {
+      "id": "redaction-token-sender",
+      "expected": "ask",
+      "why": "a scrubbed token is not an identity: [REDACTED] must never match a known sender, and two tokens are not equal to each other",
+      "email": {
+        "sender": "[REDACTED]",
+        "subject": "Your policy renews 2027-05-05",
+        "snippet": "Details attached to your account.",
+        "attachments": []
+      }
+    }
+  ]
+}

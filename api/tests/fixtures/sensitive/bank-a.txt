@@ -1,0 +1,6 @@
+Customer name: Alex Example
+Mailing address: 123 Example Lane
+Fictiontown XY A1A 1A1
+Transit 12345 Institution 678 Account 1234567
+2026-09-04 SAFE FUEL 45.10
+Transfer reference 987654321012345

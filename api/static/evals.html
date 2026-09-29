@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Financial evaluations · q-core</title><link rel="icon" href="data:,">
+<style>.toolbar{display:flex;gap:20px;align-items:end;flex-wrap:wrap;margin:24px 0}.toolbar label{display:flex;flex-direction:column;gap:8px}#runs article{margin:20px 0}.badge{display:inline-block;border:1px solid #73816e;border-radius:20px;padding:2px 10px;margin:0 8px 12px 0;font-size:.8rem}.passed{color:#91e2aa}dl{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto);gap:12px;margin:18px 0}dt{overflow-wrap:anywhere}dd{margin:0;font-variant-numeric:tabular-nums}code{font-size:.8rem}#message{padding:16px 0}details{margin-top:16px}</style></head><body><!-- app-shell --><main id="page-content" class="app-content" tabindex="-1">
+
+<h1>Financial evaluations</h1>
+<p>Read-only evidence of extraction, classification, and import safety. Runs are published explicitly; this page never executes evals or changes your ledger.</p>
+<p>Development results measure known data, not unseen accuracy. Synthetic runs test authored scenarios. Holdout labels are operator attestations of independent, previously unseen data—not automatic certification.</p>
+<div class="toolbar"><label>Corpus <select id="corpus"><option value="">All corpora</option><option>development</option><option>synthetic</option><option>holdout</option></select></label><label>Type <select id="kind"><option value="">All types</option></select></label><button id="refresh">Refresh</button></div>
+<div id="message" role="status" aria-live="polite">Loading results…</div><div id="runs"></div>
+<p>“Measured” means no binary pass threshold was defined. Classification precision excludes unknown labels and abstentions; coverage shows how many labeled rows received a decision. Safe overlap refusals are not successfully resolved links. Private row-level evidence remains in the local report.</p>
+</main><script>
+'use strict';
+const el=id=>document.getElementById(id);let runs=[];
+const names={'end-to-end-intake':'End-to-end intake','classification':'Classification','source-deduplication':'Source deduplication','source-reviewed-ledger-replay':'Reviewed ledger replay','extraction':'Extraction','deduplication':'Historical legacy deduplication'};
+function node(tag,text,cls){const n=document.createElement(tag);n.textContent=text;if(cls)n.className=cls;return n;}
+function render(){const shown=runs.filter(r=>(!el('corpus').value||r.corpus===el('corpus').value)&&(!el('kind').value||r.kind===el('kind').value));el('runs').replaceChildren();
+ for(const r of shown){const a=node('article','');a.append(node('span',r.corpus,'badge'),node('span',r.status,'badge '+r.status),node('h2',names[r.kind]||r.kind),node('small',new Date(r.created_at).toLocaleString()));
+ const details=node('details','');details.append(node('summary','Metrics and reproducibility'));const dl=node('dl','');
+ for(const [key,value] of Object.entries(r.metrics)){let display=value===null?'Not measured':typeof value==='boolean'?(value?'Yes':'No'):String(value);if(typeof value==='number'&&/precision|recall|accuracy|coverage/.test(key))display=(value*100).toFixed(2)+'%';dl.append(node('dt',key.replaceAll('_',' ')),node('dd',display));}details.append(dl);
+ for(const [label,key] of [['Report','report_hash'],['Dataset','dataset_hash'],['Implementation','source_hash'],['Commit','git_commit']]){const p=node('p',label+': ');p.append(node('code',r[key]));details.append(p);}details.append(node('p',r.dirty?'Implementation had uncommitted changes; use its source hash.':'Implementation working tree was clean.'));a.append(details);el('runs').append(a);}
+ el('message').textContent=shown.length?`${shown.length} published runs. Only compare runs with the same type, dataset and corpus; use the eval CLI for a regression verdict.`:runs.length?'No runs match these filters.':'No published runs yet. Ask q-core to run financial evals and publish the summaries.';}
+async function refresh(){el('refresh').disabled=true;try{const response=await fetch('/evals/runs',{cache:'no-store'});if(!response.ok)throw Error('load');const data=await response.json();runs=data.runs;const previous=el('kind').value;el('kind').replaceChildren(new Option('All types',''));for(const kind of [...new Set(runs.map(r=>r.kind))].sort())el('kind').add(new Option(names[kind]||kind,kind));el('kind').value=previous;render();if(data.skipped)el('message').textContent+=` ${data.skipped} invalid summaries were withheld.`;}catch{el('runs').replaceChildren();el('message').textContent='Could not load results. Check the local server, then refresh.';}finally{el('refresh').disabled=false;}}
+el('corpus').onchange=render;el('kind').onchange=render;el('refresh').onclick=refresh;refresh();
+</script></body></html>

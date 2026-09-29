@@ -1,0 +1,19 @@
+-- Drop transactions.row_hash. Mirrors db/schema.sql, which fresh installs
+-- use; this file is only ever applied to a database created before the
+-- drop.
+--
+-- The column was a per-statement de-duplication key. A later todo replaced
+-- that with an account-scoped check on the natural key
+-- (account_id, txn_date, description, amount_cents), after which nothing
+-- read row_hash: it was written on every insert and referenced by no
+-- SELECT or WHERE. Keeping a stable hash "in case reconciliation needs
+-- one later" was rejected as speculation -- one can be recomputed from the
+-- row if that day comes, and an unread NOT NULL column is something people
+-- maintain and reason about for no current reason.
+--
+-- ALTER TABLE ... DROP COLUMN needs SQLite 3.35+; the pinned interpreter
+-- reports 3.50.4. SQLite rewrites the table to do this, so the cost is
+-- proportional to row count rather than constant -- fine here, and it runs
+-- once at startup inside the migration's own transaction, so a failure
+-- leaves the column in place rather than half-removed.
+ALTER TABLE transactions DROP COLUMN row_hash;

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "q-core": {
+      "type": "http",
+      "url": "http://127.0.0.1:8420/mcp",
+      "headers": {
+        "Authorization": "Bearer ${Q_CORE_API_TOKEN}"
+      }
+    }
+  }
+}

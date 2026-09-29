@@ -1,0 +1,58 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><title>Access tokens · q-core</title>
+<style>.form{display:flex;gap:16px;flex-wrap:wrap;align-items:end;margin:24px 0}.form label{display:flex;flex-direction:column;gap:8px;font-size:.85rem;flex:1 1 200px}.form input,.form select{width:100%}#secret{display:none}#secret.show{display:block}#secret code{display:block;word-break:break-all;padding:12px;background:var(--wash);border-radius:8px;margin:12px 0;font-size:.95rem}table{border-collapse:collapse;width:100%}th,td{padding:10px 8px;text-align:left;border-bottom:1px solid var(--ring);vertical-align:middle}td.muted{color:var(--muted)}tr.revoked td{opacity:.55}#status{min-height:1.5rem;margin:16px 0}.scope{font-size:.8rem;padding:2px 8px;border-radius:999px;background:var(--wash)}</style></head><body><!-- app-shell --><main id="page-content" class="app-content" tabindex="-1">
+<h1>Access tokens</h1>
+<p>Each machine or device gets its own named token. A <strong>full</strong> token can use the whole API and MCP (a Mac or the server's own Claude sessions); a <strong>transcription</strong> token can only send dictation (the phone). Revoking one takes effect on its next request. The server's own service token is configuration, not listed here.</p>
+<form class="form panel" id="create"><label>Name<input id="name" required maxlength="80" placeholder="e.g. mac-studio" autocomplete="off"></label><label>Scope<select id="scope"><option value="full">full: API and MCP</option><option value="transcription">transcription: dictation only</option></select></label><button type="submit">Create token</button></form>
+<section class="panel" id="secret" aria-live="polite"><h2>Copy this token now</h2><p>It is shown <strong>once</strong>. Only a hash is stored, so it cannot be recovered. Put it in that machine's <code>Q_CORE_API_TOKEN</code>.</p><code id="secret-value"></code><button type="button" id="copy">Copy</button> <button type="button" id="done">I've stored it</button></section>
+<div id="status" role="status" aria-live="polite"></div>
+<section class="panel"><h2>Tokens</h2><div class="scroll"><table><thead><tr><th>Name</th><th>Scope</th><th>Starts with</th><th>Created</th><th>Last used</th><th></th></tr></thead><tbody id="rows"><tr><td colspan="6" class="muted">Loading…</td></tr></tbody></table></div></section>
+</main><script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const status = (text) => { $('status').textContent = text; };
+  const cell = (text, cls) => { const td = document.createElement('td'); td.textContent = text == null ? '—' : text; if (cls) td.className = cls; return td; };
+  const write = (path, body) => fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Q-Core-Request': 'tokens' }, body: JSON.stringify(body) })
+    .then(async (r) => { const data = await r.json().catch(() => ({})); if (!r.ok) throw new Error((data.error && data.error.message) || ('HTTP ' + r.status)); return data; });
+  async function load() {
+    let items;
+    try {
+      const r = await fetch('/ui/tokens/list');
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error((data.error && data.error.message) || ('HTTP ' + r.status));
+      items = data.items;
+    } catch (e) {
+      $('rows').replaceChildren(); status('Could not load tokens: ' + e.message); return;
+    }
+    const rows = $('rows'); rows.replaceChildren();
+    if (!items.length) { const tr = document.createElement('tr'); tr.append(cell('No tokens yet.', 'muted')); tr.firstChild.colSpan = 6; rows.append(tr); return; }
+    for (const t of items) {
+      const tr = document.createElement('tr'); if (t.revoked_at) tr.className = 'revoked';
+      const scope = document.createElement('td'); const badge = document.createElement('span'); badge.className = 'scope'; badge.textContent = t.scope; scope.append(badge);
+      tr.append(cell(t.name), scope, cell(t.prefix + '…', 'muted'), cell(t.created_at, 'muted'), cell(t.last_used_at || 'never', 'muted'));
+      const action = document.createElement('td');
+      if (t.revoked_at) { action.textContent = 'revoked ' + t.revoked_at; action.className = 'muted'; }
+      else {
+        const b = document.createElement('button'); b.type = 'button'; b.textContent = 'Revoke';
+        b.addEventListener('click', async () => {
+          if (!window.confirm('Revoke "' + t.name + '"? Anything using it stops working immediately.')) return;
+          try { await write('/ui/tokens/revoke', { id: t.id }); status('Revoked ' + t.name + '.'); load(); } catch (e) { status('Revoke failed: ' + e.message); }
+        });
+        action.append(b);
+      }
+      tr.append(action); rows.append(tr);
+    }
+  }
+  $('create').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    try {
+      const data = await write('/ui/tokens/create', { name: $('name').value.trim(), scope: $('scope').value });
+      $('secret-value').textContent = data.token; $('secret').classList.add('show');
+      status('Created ' + data.record.name + '.'); $('name').value = ''; load();
+    } catch (e) { status('Create failed: ' + e.message); }
+  });
+  $('copy').addEventListener('click', () => navigator.clipboard.writeText($('secret-value').textContent).then(() => status('Copied.'), () => status('Copy failed; select and copy it manually.')));
+  $('done').addEventListener('click', () => { $('secret-value').textContent = ''; $('secret').classList.remove('show'); status('Token cleared from this page.'); });
+  load();
+})();
+</script>
+</body></html>

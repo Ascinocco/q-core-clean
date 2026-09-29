@@ -1,0 +1,10 @@
+{
+  "invented_only": true,
+  "purpose": "Synthetic Canadian financial privacy regression inputs",
+  "sources": [
+    "bank-c.csv",
+    "bank-a.txt",
+    "bank-b-card.txt",
+    "bank-b-printout.txt"
+  ]
+}

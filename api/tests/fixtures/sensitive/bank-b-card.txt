@@ -1,0 +1,5 @@
+Cardholder name: Alex Example
+Visa 4532015112830366
+Already masked card 411111******1234
+2026-09-05 SAFE SHOP 19.95
+Email alex.example@example.test

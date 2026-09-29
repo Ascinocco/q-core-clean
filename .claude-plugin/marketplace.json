@@ -1,0 +1,14 @@
+{
+  "name": "q-core",
+  "description": "The owner's q-core plugin: life skills and the q-core MCP connection.",
+  "owner": {
+    "name": "The owner"
+  },
+  "plugins": [
+    {
+      "name": "q-core",
+      "source": "./plugin",
+      "description": "Life skills and the q-core MCP connection."
+    }
+  ]
+}

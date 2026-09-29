@@ -1,0 +1,11 @@
+[tool.pytest.ini_options]
+# The repo root alone. q_core_mcp/ sits beside api/, so both import with
+# no extra path entry — which is also why the SDK-shadowing hazard that
+# forced the old nested mcp/ package name is gone: no directory named
+# `mcp` is on sys.path any more.
+pythonpath = ["."]
+# "tests" holds repo-wide invariants that belong to neither service (skill
+# vocabularies, for one). It has to be listed here or
+# a bare `pytest` silently skips the whole directory — verified by running
+# --collect-only before adding it, which found zero of its tests.
+testpaths = ["api/tests", "q_core_mcp/tests", "tests"]

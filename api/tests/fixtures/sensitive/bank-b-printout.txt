@@ -1,0 +1,5 @@
+Customer name: Alex Example
+American Express 378282246310005
+SIN 123-45-6789
+Account 1234 5678 9012 3456
+2026-09-06 SAFE HARDWARE 72.40

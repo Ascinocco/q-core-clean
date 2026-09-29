@@ -1,0 +1,88 @@
+# Every entry below is classified by WHERE ITS OUTPUT LANDS, audited
+# 2026-09-19 (ticket T-25). The rule, from the pypdf story (ticket T-24):
+# a dependency whose output reaches a STORED VALUE, a KEY, or SCRUBBED
+# TEXT is pinned exactly; everything else keeps a floor.
+#
+# Why a floor is not enough for those: a floor does not discriminate.
+# `pypdf>=5.1` had already allowed an in-place jump to 6.19.0, and pypdf
+# feeds `description`, which is part of the de-duplication key -- so an
+# upgrade changing whitespace handling changes the key for every
+# previously imported row, silently, with re-imports simply starting to
+# create duplicates.
+#
+# The distinction that decides each line is LOUD versus SILENT. A change
+# in something read at request time shows up the next time you look. A
+# change in something written into a row is permanent, and nothing
+# re-derives it to notice.
+
+# --- pinned: output lands in a stored value or a key -------------------
+
+# Parses and coerces `txn_date` (a `date`) and `amount_cents` (StrictInt)
+# on the way in; both are part of the account-scoped dedup key. A change
+# in coercion changes what is stored and therefore what dedups.
+#
+# I first flagged this as borderline on the grounds that a coercion
+# change would "most likely fail loudly" as a validation error. That
+# reasoning was wrong, and the correction is worth keeping because it is
+# the whole point of the loud/silent test: MOST LIKELY LOUD IS NOT
+# GUARANTEED LOUD, and the failures that matter are the ones that are
+# not. A stricter parse rejects and shouts. A more LENIENT parse accepts
+# what it used to reject -- or reads an ambiguous date differently -- and
+# returns 200 having written a different key. That is the silent case,
+# and a floor permits exactly the upgrade that produces it.
+#
+# Not hypothetical: 2.13.5 ALREADY does this. A datetime string is
+# accepted on a `date` field at exactly 00:00:00, keeping the calendar
+# date and discarding the offset (ticket T-22). The key-family fields
+# are now guarded by `KeyDate` in api/models.py, so the leniency is fenced
+# off at our boundary rather than depended upon to stay absent -- but the
+# lesson stands: the coercion this pin protects against is one this
+# version performs today, on a value nobody probed.
+pydantic==2.13.5
+
+# Parses the multipart upload whose `filename` and `content_hash` are
+# INSERTed into ticket_attachments. A change in how it decodes a filename
+# changes a stored value, and content_hash is computed from what it
+# hands us.
+python-multipart==0.0.32
+
+# Extracts statement text, which becomes `description` -- part of the
+# dedup key. See the block above; this is the case the rule came from.
+# Upgrade deliberately, and re-run api/tests/test_scrubber_determinism.py
+# plus a re-import when you do.
+pypdf==6.19.0
+
+# --- floors: output does not reach stored data -------------------------
+
+# Routing and response serialization. Nothing it produces is written.
+fastapi>=0.115
+
+# The ASGI server. Transport only.
+uvicorn[standard]>=0.34
+
+# Loads settings at startup. Affects which database is opened, not what
+# is written into it.
+pydantic-settings>=2.7
+
+# `rrulestr(...).between(...)` expands recurrence rules into due-date
+# occurrences. Audited rather than assumed: api/due.py performs ZERO
+# writes -- the occurrences are computed at request time for the digest
+# and never stored. So a behaviour change alters what the next digest
+# reports, visibly, and re-running shows it. That is the loud kind.
+python-dateutil>=2.9
+
+# The MCP server runs inside this process (api/main.py mounts it at
+# /mcp), so the SDK is an API runtime dependency, not just a dev one.
+# Tool surface only; nothing it produces is written.
+-r ../q_core_mcp/requirements.txt
+
+# OpenTelemetry (runbooks/observability.md, "Traces"). Off unless
+# OTEL_EXPORTER_OTLP_ENDPOINT is set; every exported span and log passes an
+# attribute allowlist (api/telemetry.py). Telemetry only: nothing it
+# produces is written to the database.
+opentelemetry-api>=1.30
+opentelemetry-sdk>=1.30
+opentelemetry-exporter-otlp-proto-http>=1.30
+opentelemetry-instrumentation-fastapi>=0.51b0
+opentelemetry-instrumentation-httpx>=0.51b0
+opentelemetry-instrumentation-logging>=0.51b0

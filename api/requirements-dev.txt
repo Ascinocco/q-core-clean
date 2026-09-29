@@ -1,0 +1,4 @@
+-r requirements.txt
+-r ../q_core_mcp/requirements.txt
+pytest>=8.3
+httpx>=0.28

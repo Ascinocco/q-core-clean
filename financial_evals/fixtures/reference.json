@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "metadata": {"review_basis": "Synthetic regression examples, not private financial data"},
+  "entities": [{"id": "account-a", "type": "account"}, {"id": "account-b", "type": "account"}],
+  "categories": [
+    {"id": "food", "name": "Food", "parent_id": null},
+    {"id": "food_dining", "name": "Dining", "parent_id": "food"},
+    {"id": "auto", "name": "Auto", "parent_id": null},
+    {"id": "auto_fuel", "name": "Fuel", "parent_id": "auto"},
+    {"id": "transfers", "name": "Transfers", "parent_id": null},
+    {"id": "income", "name": "Income", "parent_id": null}
+  ],
+  "rules": [
+    {"id": "r1", "pattern": "CAFE", "category_id": "food_dining", "entity_id": null},
+    {"id": "r2", "pattern": "SHELL", "category_id": "auto_fuel", "entity_id": null},
+    {"id": "r3", "pattern": "CARD PAYMENT", "category_id": "transfers", "entity_id": null}
+  ],
+  "statements": [{"id": "s1", "account_id": "account-a", "period_start": "2026-06-01", "period_end": "2026-06-30"}],
+  "transactions": [
+    {"id": "t1", "statement_id": "s1", "account_id": "account-a", "txn_date": "2026-06-03", "description": "CAFE #12", "amount_cents": -500, "category_id": "food_dining", "entity_id": null},
+    {"id": "t2", "statement_id": "s1", "account_id": "account-a", "txn_date": "2026-06-04", "description": "SHELL #12", "amount_cents": -2500, "category_id": "auto_fuel", "entity_id": null},
+    {"id": "t3", "statement_id": "s1", "account_id": "account-a", "txn_date": "2026-06-05", "description": "CARD PAYMENT", "amount_cents": -3000, "category_id": "transfers", "entity_id": null},
+    {"id": "t4", "statement_id": "s1", "account_id": "account-a", "txn_date": "2026-06-06", "description": "ZUMSHELLA SALON", "amount_cents": -6000, "category_id": null, "entity_id": null}
+  ]
+}
